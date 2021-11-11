@@ -1,5 +1,5 @@
 module Main where
-    
+
 import System.IO
 import Data.Maybe
 import Control.Concurrent
@@ -101,9 +101,8 @@ ifReadyDo hnd x = hReady hnd >>= f
 -- https://stackoverflow.com/questions/2472391/how-do-i-clear-the-terminal-screen-in-haskell
 -- https://hackage.haskell.org/package/ansi-terminal-0.5.0/docs/System-Console-ANSI.html
 
-{-
-clear = putStr "\ESC[2J"
-
+    
+main :: IO ()
 main = do
     hSetEcho stdin False
     hSetBuffering stdin NoBuffering
@@ -112,16 +111,8 @@ main = do
         then return ()
         else do
             putStr ( [fromJust input] ++ "+")
-    putStr $ screenBufToString blankBuffer
-    threadDelay 1000000 -- 16666 -- 16.6ms, 60fps
-    clear
-    
-    main
-    
--}
+    -- putStr $ screenBufToString blankBuffer
 
-main :: IO ()
-main = do
     setCursorPosition 5 0
     setTitle "ANSI Terminal Short Example"
 
@@ -135,6 +126,13 @@ main = do
            , SetColor Background Dull Blue
            ]
     putStrLn "World!"
-    threadDelay 1000000 
+    
+
+    threadDelay 1000000 -- 16666 -- 16.6ms, 60fps
     hClearScreen stdout
+    
+    main
+
+
+
 
