@@ -2,13 +2,12 @@ module Main where
 
 import System.IO
 import Data.Maybe
+import Data.Array
 import Control.Concurrent
 import System.Console.ANSI
 
 
 -- import System.TimeIt
-
--- advanceFrame :: GlobalState -> Inputs -> GlobalState
 
 data TextBoxPosition = Top | Middle | Bottom deriving (Show)
 
@@ -18,7 +17,20 @@ data TextBox = TextBox {
     position :: TextBoxPosition
 } deriving (Show)
 
+data MapDimensions = MapDimensions {
+    height :: Int,
+    width  :: Int
+} deriving (Show)
+mapDimensions = MapDimensions 64 64
+screenResolution = mapDimensions
+
 type Coordinate = (Int, Int)
+coordinateToIndex :: Coordinate -> Int
+coordinateToIndex (x,y) = (width mapDimensions) * y + x
+
+tileCount = (width mapDimensions) * (height mapDimensions)
+tileData = array (0, tileCount - 1) [(i, i) | i <- [0 .. (tileCount - 1)]]
+
 data MapId = Home | RivalHome | StartingTown | StartLab deriving(Show, Eq)
 
 data ColissionType = Ground | Encounter | Wall | Warp MapId Coordinate | Water deriving(Show)
@@ -62,7 +74,7 @@ data GameInput = Up | Down | Left | Right | Advance | Back | MenuInput deriving(
 -- data VirtualInput ... do we need this layer?
 
 computeNextState :: GameState -> GameInput -> GameState
-computeNextState prevState inputs = prevState
+computeNextState prevState input = prevState
 
 drawState :: GameState -> [IO ()]
 drawState state = [return ()]
@@ -101,6 +113,7 @@ ifReadyDo hnd x = hReady hnd >>= f
 -- https://stackoverflow.com/questions/2472391/how-do-i-clear-the-terminal-screen-in-haskell
 -- https://hackage.haskell.org/package/ansi-terminal-0.5.0/docs/System-Console-ANSI.html
 
+
     
 main :: IO ()
 main = do
@@ -127,9 +140,10 @@ main = do
            ]
     putStrLn "World!"
     
-
+    print $ bounds tileData
     threadDelay 1000000 -- 16666 -- 16.6ms, 60fps
     hClearScreen stdout
+    
     
     main
 
