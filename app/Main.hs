@@ -55,12 +55,14 @@ coordinateToIndex (x,y) = (width mapDimensions) * y + x
 tileCount = (width mapDimensions) * (height mapDimensions)
 dummyTileData = array (0, tileCount - 1) (take (tileCount - 1) (zip [0,1..] (repeat waterTile)) )
 
+type TileBuffer = Array Int Tile -- pretty sure this is correct?
+
 
 data MapId = Home | RivalHome | StartingTown | StartLab deriving(Show, Eq)
 
 data MapStructure = MapStructure {
     id :: MapId,
-    tileData :: Array Int Tile -- pretty sure this is correct?
+    tileData :: TileBuffer 
     -- some sort of actor list, an actors existance may depend on game flags
 } deriving(Show)
 
@@ -97,8 +99,26 @@ data GameInput = Up | Down | Left | Right | Advance | Back | MenuInput deriving(
 computeNextState :: GameState -> GameInput -> GameState
 computeNextState prevState input = prevState
 
-drawState :: GameState -> IO () -- this is gonna be BIG, need to break it down, find the intermediate representations, ect
-drawState state = mapM_ print [1,2,3]
+drawGameState :: GameState -> IO () -- this is gonna be BIG, need to break it down, find the intermediate representations, ect
+drawGameState state = mapM_ print [1,2,3]
+
+-- Int args are for the current frame, this could also be in the subStates or we could just pass the global state
+drawOverworld :: TileBuffer {- -> OverworldState -> int -} -> TileBuffer
+drawOverworld buff = buff
+
+drawBattle :: TileBuffer {- -> BattleState -> int -} -> TileBuffer
+drawBattle buff = buff
+
+drawTextBox :: TileBuffer {- -> TextBoxState -> int -} -> TileBuffer
+drawTextBox buff = buff
+
+drawMenu :: TileBuffer {- -> TextBoxState -> int -} -> TileBuffer
+drawMenu buff = buff
+
+-- drawActors/Player
+
+drawTileBuffer :: TileBuffer -> IO ()
+drawTileBuffer buff = mapM_ print [1,2,3]
 
 
 -- drawTextBox :: ScreenBuf -> TextBox -> ScreenBuf
