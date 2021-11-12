@@ -17,7 +17,31 @@ data TextBox = TextBox {
     position :: TextBoxPosition
 } deriving (Show)
 
-data MapDimensions = MapDimensions {
+
+-- Tile Stuff 
+
+data TileRender = TileRender {
+    -- global frame number mod list length... or they could be infinite lists??? nah
+    charColorList :: [System.Console.ANSI.Color],
+    backgroundColorList :: [System.Console.ANSI.Color],
+    characterList   :: [Char],
+    italicizedList  :: [Bool]
+} deriving (Show)
+
+waterTileRender = TileRender [Blue] [Cyan, White] ['w', 'W', 'w', 'W'] [True, True, False, False]
+
+data ColissionType = Ground | Encounter | Wall | Warp MapId Coordinate | Water deriving(Show)
+
+data Tile = Tile {
+    render :: TileRender,
+    colission :: ColissionType
+} deriving (Show)
+
+waterTile = Tile waterTileRender Water
+
+-- Map Stuff
+
+data MapDimensions = MapDimensions { -- maybe rename to GlobalMapDimensions
     height :: Int,
     width  :: Int
 } deriving (Show)
@@ -29,23 +53,20 @@ coordinateToIndex :: Coordinate -> Int
 coordinateToIndex (x,y) = (width mapDimensions) * y + x
 
 tileCount = (width mapDimensions) * (height mapDimensions)
-tileData = array (0, tileCount - 1) [(i, i) | i <- [0 .. (tileCount - 1)]]
+dummyTileData = array (0, tileCount - 1) (take (tileCount - 1) (zip [0,1..] (repeat waterTile)) )
+
 
 data MapId = Home | RivalHome | StartingTown | StartLab deriving(Show, Eq)
 
-data ColissionType = Ground | Encounter | Wall | Warp MapId Coordinate | Water deriving(Show)
+data MapStructure = MapStructure {
+    id :: MapId,
+    tileData :: Array Int Tile -- pretty sure this is correct?
+    -- some sort of actor list, an actors existance may depend on game flags
+} deriving(Show)
 
-data TileRender = TileRender {
-    -- global frame number mod list length... or they could be infinite lists??? nah
-    charColorList :: [System.Console.ANSI.Color],
-    backgroundColorList :: [System.Console.ANSI.Color],
-    characterList   :: [Char],
-    italicizedList  :: [Bool]
-} deriving (Show)
-data Tile = Tile {
-    render :: TileRender,
-    colission :: ColissionType
-} deriving (Show)
+
+
+
 
 data SceneType = InMenu | InTextBox | InOverworld | InBattle deriving(Show)
 
@@ -76,8 +97,8 @@ data GameInput = Up | Down | Left | Right | Advance | Back | MenuInput deriving(
 computeNextState :: GameState -> GameInput -> GameState
 computeNextState prevState input = prevState
 
-drawState :: GameState -> [IO ()]
-drawState state = [return ()]
+drawState :: GameState -> IO () -- this is gonna be BIG, need to break it down, find the intermediate representations, ect
+drawState state = mapM_ print [1,2,3]
 
 
 -- drawTextBox :: ScreenBuf -> TextBox -> ScreenBuf
@@ -140,7 +161,7 @@ main = do
            ]
     putStrLn "World!"
     
-    print $ bounds tileData
+    print $ bounds dummyTileData
     threadDelay 1000000 -- 16666 -- 16.6ms, 60fps
     hClearScreen stdout
     
