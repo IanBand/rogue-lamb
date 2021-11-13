@@ -83,10 +83,15 @@ data OverworldState = OverworldState {
     currentMap :: MapId
     -- list of current actors + positions?
 } deriving(Show)
+
+data GameInput = Up | Down | Left | Right | Advance | Back | MenuInput | NoInput deriving(Show)
+
+
 data GameState = GameState {
     frameNumber :: Int,
-    currentSceneStack :: [SceneType], -- use a real stack template or whatever its called (ADT?) in haskell
-    overworldState :: OverworldState
+    dummyPrevInput :: GameInput
+    -- currentSceneStack :: [SceneType], -- use a real stack template or whatever its called (ADT?) in haskell
+    -- overworldState :: OverworldState
     -- team :: (Ally, Ally, Ally, Ally, Ally),
     -- inventory :: (Item, Item, Item, Item ... ),
     -- 
@@ -97,13 +102,14 @@ data GameState = GameState {
 
 } deriving (Show)
 
-data GameInput = Up | Down | Left | Right | Advance | Back | MenuInput | NoInput deriving(Show)
+initGameState = GameState 1 NoInput
+
 -- data PhysicalInput = all the key presses
 -- a user-configurable map from physical input to GameInput
 -- buttonMap :: PhysicalInput -> ButtonMapConfig -> GameInput
 
 computeNextState :: GameState -> GameInput -> GameState
-computeNextState prevState input = prevState
+computeNextState prevState input = GameState ((frameNumber prevState) + 1) input
 
 
 
@@ -125,8 +131,10 @@ drawMenu buff = buff
 drawTileBuffer :: TileBuffer -> IO ()
 drawTileBuffer buff = mapM_ print [1,2,3]
 
-drawGameState :: GameState -> IO ()       -- this is gonna be BIG, need to break it down, find the intermediate representations, ect
-drawGameState state = mapM_ print [1,2,3] -- goal of this function is to make a fat list of setSGR and putChar (as seen in the current main) then use mapM to make it into one IO action
+drawGameState :: GameState -> IO ()  -- this is gonna be BIG, need to break it down, find the intermediate representations, ect
+drawGameState state = print state    -- goal of this function is to make a fat list of setSGR and putChar (as seen in the commented out main) then use mapM to make it into one IO action
+    
+
 
 -- =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= --
 
@@ -178,12 +186,20 @@ executeFrame prevState = do
     prevState' <- prevState
     input <- getGameInput
     nextState <- return $ computeNextState prevState' input
+    hClearScreen stdout
     drawGameState nextState
-    threadDelay 16666 -- 16.6ms, 60fps TODO: time the compute and draw functions and make this dynamic, also multithreading eventually yadda yadda...
+    threadDelay 300000 --  16666 -- 16.6ms, 60fps TODO: time the compute and draw functions and make this dynamic, also multithreading eventually yadda yadda... 60 fps too fast?
     return nextState
 
-    
+runGame :: IO ()
+runGame = sequence_ (iterate executeFrame $ return initGameState)
 
+main :: IO ()
+main = do
+    hSetEcho stdin False
+    hSetBuffering stdin NoBuffering
+    runGame
+{-
 main :: IO ()
 main = do
     hSetEcho stdin False
@@ -215,7 +231,7 @@ main = do
     
     
     main
-
+-}
 
 
 
