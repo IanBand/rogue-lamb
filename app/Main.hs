@@ -181,23 +181,20 @@ getGameInput = do
            )
 
 
-executeFrame :: GameState -> IO ()
-executeFrame prevState = do
+runGame :: GameState -> IO ()
+runGame prevState = do
     input <- getGameInput
     let nextState = computeNextState prevState input
     hClearScreen stdout
     drawGameState nextState
     threadDelay 300000 --  16666 -- 16.6ms, 60fps TODO: time the compute and draw functions and make this dynamic, also multithreading eventually yadda yadda... 60 fps too fast?
-    executeFrame nextState
-
-runGame :: IO ()
-runGame = executeFrame initGameState
+    runGame nextState
 
 main :: IO ()
 main = do
     hSetEcho stdin False
     hSetBuffering stdin NoBuffering
-    runGame
+    runGame initGameState
 {-
 main :: IO ()
 main = do
