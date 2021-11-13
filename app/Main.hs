@@ -3,8 +3,11 @@ module Main where
 import System.IO
 import Data.Maybe
 import Data.Array
+import Data.Char
+import Data.List
 import Control.Concurrent
 import System.Console.ANSI
+
 
 
 -- import System.TimeIt
@@ -81,6 +84,7 @@ data OverworldState = OverworldState {
     -- list of current actors + positions?
 } deriving(Show)
 data GameState = GameState {
+    frameNumber :: Int,
     currentSceneStack :: [SceneType], -- use a real stack template or whatever its called (ADT?) in haskell
     overworldState :: OverworldState
     -- team :: (Ally, Ally, Ally, Ally, Ally),
@@ -93,14 +97,15 @@ data GameState = GameState {
 
 } deriving (Show)
 
-data GameInput = Up | Down | Left | Right | Advance | Back | MenuInput deriving(Show)
--- data VirtualInput ... do we need this layer?
+data GameInput = Up | Down | Left | Right | Advance | Back | MenuInput | NoInput deriving(Show)
+-- data PhysicalInput = all the key presses
+-- a user-configurable map from physical input to GameInput
+-- buttonMap :: PhysicalInput -> ButtonMapConfig -> GameInput
 
 computeNextState :: GameState -> GameInput -> GameState
 computeNextState prevState input = prevState
 
-drawGameState :: GameState -> IO () -- this is gonna be BIG, need to break it down, find the intermediate representations, ect
-drawGameState state = mapM_ print [1,2,3]
+
 
 -- Int args are for the current frame, this could also be in the subStates or we could just pass the global state
 drawOverworld :: TileBuffer {- -> OverworldState -> int -} -> TileBuffer
@@ -120,42 +125,65 @@ drawMenu buff = buff
 drawTileBuffer :: TileBuffer -> IO ()
 drawTileBuffer buff = mapM_ print [1,2,3]
 
-
--- drawTextBox :: ScreenBuf -> TextBox -> ScreenBuf
-
-{-
-blankBuffer = blankBufferNxN 16 16
-blankBufferNxN :: Int -> Int -> ScreenBuf
-blankBufferNxN h w
-    | h <= 0 = blankBufferNxN 64 w
-    | w <= 0 = blankBufferNxN h 64
-    | otherwise = replicate w col where col = replicate h '.'
-
-
-screenBufToString :: ScreenBuf -> [Char]
-screenBufToString  buf = (foldl1 (\acc line -> acc ++ "\n" ++ line) buf) ++ "\n"
---printScreenBuf buf = map (\l -> l ++ "\n") buf 
-
--}
-
+drawGameState :: GameState -> IO ()       -- this is gonna be BIG, need to break it down, find the intermediate representations, ect
+drawGameState state = mapM_ print [1,2,3] -- goal of this function is to make a fat list of setSGR and putChar (as seen in the current main) then use mapM to make it into one IO action
 
 -- =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= --
 
 
+
+-- https://stackoverflow.com/questions/7829574/simple-counter-in-io
+-- define an infinite list of frames to execute...?
+-- yes
+-- https://stackoverflow.com/questions/39809592/haskell-infinite-recursion-in-list-comprehension?fbclid=IwAR3Kn_m_vxsvwtNyYdhTNThlS3Bgmj9x-Z1Tyytrf9bn9EDH_OgzCTdeW8k
+
+-- https://stackoverflow.com/questions/2472391/how-do-i-clear-the-terminal-screen-in-haskell
+-- https://hackage.haskell.org/package/ansi-terminal-0.5.0/docs/System-Console-ANSI.html
+
+-- https://hackage.haskell.org/package/transformers-0.6.0.2/docs/Control-Monad-Trans-State-Strict.html no need, probably
+
+
+
+
+-- https://stackoverflow.com/questions/3894792/what-is-a-simple-way-to-wait-for-and-then-detect-keypresses-in-haskell
 ifReadyDo :: Handle -> IO a -> IO (Maybe a)
 ifReadyDo hnd x = hReady hnd >>= f
    where f True = x >>= return . Just
          f _    = return Nothing
 
--- https://stackoverflow.com/questions/3894792/what-is-a-simple-way-to-wait-for-and-then-detect-keypresses-in-haskell
--- https://stackoverflow.com/questions/7829574/simple-counter-in-io
--- define an infinite list of frames to execute...?
+-- TODO: gotta split these up into modules, running into some name colissions
+-- TODO: apply button map based on some config
+buttonMap :: Char -> GameInput 
+buttonMap c
+    | toLower c == 'w' = Up
+--    | toLower c == 'a' = Left
+    | toLower c == 's' = Down
+--    | toLower c == 'd' = Right
+    | toLower c == ' ' = Advance
+    | toLower c == 'x' = Back
+    | toLower c == 'm' = MenuInput
+    | otherwise = NoInput
 
--- https://stackoverflow.com/questions/2472391/how-do-i-clear-the-terminal-screen-in-haskell
--- https://hackage.haskell.org/package/ansi-terminal-0.5.0/docs/System-Console-ANSI.html
+getGameInput :: IO (GameInput)
+getGameInput = do 
+    input <- stdin `ifReadyDo` getChar
+    return ( case input of
+                Just c  -> buttonMap c
+                Nothing -> NoInput
+           )
 
+
+executeFrame :: IO (GameState) -> IO (GameState)
+executeFrame prevState = do
+    prevState' <- prevState
+    input <- getGameInput
+    nextState <- return $ computeNextState prevState' input
+    drawGameState nextState
+    threadDelay 16666 -- 16.6ms, 60fps TODO: time the compute and draw functions and make this dynamic, also multithreading eventually yadda yadda...
+    return nextState
 
     
+
 main :: IO ()
 main = do
     hSetEcho stdin False
