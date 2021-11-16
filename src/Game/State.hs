@@ -35,7 +35,7 @@ data MapDimensions = MapDimensions { -- maybe rename to GlobalMapDimensions
 } deriving (Show)
 
 mapDimensions :: MapDimensions
-mapDimensions = MapDimensions { height = 64, width = 64 }
+mapDimensions = MapDimensions { height = 32, width = 64 }
 
 tileCount :: Int
 tileCount = (width mapDimensions) * (height mapDimensions)

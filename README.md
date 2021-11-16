@@ -5,3 +5,4 @@ The ultimate goal of the project is to have an engine with the same rough capabi
 
 ## Development notes
 Test with ``` cabal repl app/Main.hs ```. This runs it in ghci, use :r to reload modules. 
+Test with a tall and wide enough terminal or else the rendering will mess up

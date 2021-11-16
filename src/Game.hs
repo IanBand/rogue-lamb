@@ -14,23 +14,6 @@ import System.Console.ANSI
 import Game.State
 import Game.Render
 
-waterTileRender :: Game.Render.TileRender
-waterTileRender = TileRender {
-    charColorList = [Blue],
-    backgroundColorList = [Cyan, White],
-    characterList = ['w', 'W', 'w', 'W'],
-    italicizedList = [True, True, False, False]
-} 
-
-waterTile :: Tile
-waterTile = Tile {
-    render = waterTileRender,
-    colission = Water
-}
-
-dummyTileData :: Array Int Tile
-dummyTileData = array arrayBounds (take (Game.State.tileCount - 1) (zip [0,1..] (repeat waterTile)) )
-
 initGameState :: GameState
 initGameState = GameState {
     frameNumber = 0,
@@ -50,9 +33,9 @@ runGame :: GameState -> IO ()
 runGame prevState = do
     input <- getGameInput
     let nextState = computeNextState prevState input
-    hClearScreen stdout
+    hCursorUp stdout $ height mapDimensions -- move cursor back to top
     drawGameState nextState
-    threadDelay 300000 -- time in uS
+    threadDelay 696969 -- time in uS
     runGame nextState
 
 getGameInput :: IO (GameInput)
@@ -69,7 +52,6 @@ ifReadyDo hnd x = hReady hnd >>= f
    where f True = x >>= return . Just
          f _    = return Nothing
 
--- TODO: gotta split these up into modules, running into some name colissions
 -- TODO: apply button map based on some config
 buttonMap :: Char -> GameInput 
 buttonMap c

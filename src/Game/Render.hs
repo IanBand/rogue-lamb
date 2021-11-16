@@ -13,6 +13,8 @@ import Game.State
 import Data.Array
 import System.Console.ANSI
 
+import Data.Char -- temp
+
 
 type TileBuffer = Array Int Tile -- pretty sure this is correct?
 
@@ -40,52 +42,74 @@ data TileRender = TileRender {
 
 
 
+waterTileRender :: Game.Render.TileRender
+waterTileRender = TileRender {
+    charColorList = [Cyan],
+    backgroundColorList = [Blue],
+    characterList = ['w', 'W', 'w', 'W'],
+    italicizedList = [True, True, False, False]
+} 
+
+waterTile :: Tile
+waterTile = Tile {
+    render = waterTileRender,
+    colission = Water
+}
+waterTileBuffer :: TileBuffer
+waterTileBuffer = solidTileBuffer waterTile
+
+solidTileBuffer :: Tile -> TileBuffer
+solidTileBuffer tile = array arrayBounds (take tileCount (zip [0,1..] (repeat tile) ) )
+
+-- Terminology note: functions that render produce a TileBuffer, while functions that draw actually produce IO commands to draw a tilebuffer
 
 
--- Int args are for the current frame, this could also be in the subStates or we could just pass the global state
-drawOverworld :: TileBuffer {- -> OverworldState -> int -} -> TileBuffer
-drawOverworld buff = buff
+renderGameState :: GameState -> TileBuffer
+renderGameState state = solidTileBuffer waterTile
 
-drawBattle :: TileBuffer {- -> BattleState -> int -} -> TileBuffer
-drawBattle buff = buff
 
-drawTextBox :: TileBuffer {- -> TextBoxState -> int -} -> TileBuffer
-drawTextBox buff = buff
+renderOverworld :: TileBuffer {- -> OverworldState -> int -} -> TileBuffer
+renderOverworld buff = buff
 
-drawMenu :: TileBuffer {- -> TextBoxState -> int -} -> TileBuffer
-drawMenu buff = buff
+renderBattle :: TileBuffer {- -> BattleState -> int -} -> TileBuffer
+renderBattle buff = buff
+
+renderTextBox :: TileBuffer {- -> TextBoxState -> int -} -> TileBuffer
+renderTextBox buff = buff
+
+renderMenu :: TileBuffer {- -> TextBoxState -> int -} -> TileBuffer
+renderMenu buff = buff
 
 -- drawActors/Player
 
+drawTile :: Tile -> Int -> [IO ()]
+drawTile (Tile render colission) frameNumber = [
+                                setSGR [
+                                      SetColor Background Vivid $ currentValueIn backgroundColorList
+                                     ,SetColor Foreground Vivid $ currentValueIn charColorList
+                                     ,SetItalicized $ currentValueIn italicizedList
+                                 ]
+                                ,putChar $ currentValueIn characterList
+                                ]
+                                where currentValueIn = valueOnFrame render keyframe
+                                      keyframe = frameNumber
+    
+valueOnFrame :: TileRender -> Int -> (TileRender -> [a]) -> a
+valueOnFrame render keyframe access  = (access render) !! ( keyframe `mod` (length $ access render) )
 
-
-
-
-drawTile :: Tile -> [IO ()]
-drawTile tile = [putChar '_']
-
+-- put in a newline if the index tells us we are at the end of a line 
+-- TODO: fix this logic
 drawRow :: (Int, Tile) -> Int -> [IO ()]
-drawRow (index, tile) frameNumber = [putChar '\n'] -- put in a newline if the index tells us we are at the end of a line
+drawRow (index, tile) frameNumber = if index `mod` (width Game.State.mapDimensions) == 0 
+                                    then [putChar '\n'] ++ (drawTile tile frameNumber) 
+                                    else (drawTile tile $ frameNumber + 1)
 
 drawTileBuffer :: TileBuffer -> Int -> IO ()
-drawTileBuffer buff frameNumber = print frameNumber -- mapM_ . concat $ (`drawRow` frameNumber) <$> (assocs buff)
+drawTileBuffer buff frameNumber = sequence_ $ concat $ map (`drawRow` frameNumber) (assocs buff) 
 
 
 
-
-drawGameState :: GameState -> IO ()  -- this is gonna be BIG, need to break it down, find the intermediate representations, ect
-drawGameState state = print state    -- goal of this function is to make a fat list of setSGR and putChar (as seen in the commented out main) then use mapM to make it into one IO action
-    
-{-
-main :: IO ()
-main = do
-    setSGR [ SetConsoleIntensity FaintIntensity
-           , SetColor Foreground Vivid Red
-           ]
-    putStr "Hello"
-    setSGR [ SetConsoleIntensity FaintIntensity
-           , SetColor Foreground Vivid White
-           , SetColor Background Dull Blue
-           ]
-    putStrLn "World!"
--}
+-- this is gonna be BIG, need to break it down, find the intermediate representations, ect
+-- goal of this function is to make a fat list of setSGR and putChar (as seen in the commented out main) then use mapM to make it into one IO action
+drawGameState :: GameState -> IO ()  
+drawGameState state = drawTileBuffer waterTileBuffer (frameNumber state) 
