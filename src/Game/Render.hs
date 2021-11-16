@@ -41,6 +41,7 @@ data TileRender = TileRender {
 
 
 
+
 -- Int args are for the current frame, this could also be in the subStates or we could just pass the global state
 drawOverworld :: TileBuffer {- -> OverworldState -> int -} -> TileBuffer
 drawOverworld buff = buff
@@ -56,9 +57,35 @@ drawMenu buff = buff
 
 -- drawActors/Player
 
-drawTileBuffer :: TileBuffer -> IO ()
-drawTileBuffer buff = mapM_ print [1,2,3]
+
+
+
+
+drawTile :: Tile -> [IO ()]
+drawTile tile = [putChar '_']
+
+drawRow :: (Int, Tile) -> Int -> [IO ()]
+drawRow (index, tile) frameNumber = [putChar '\n'] -- put in a newline if the index tells us we are at the end of a line
+
+drawTileBuffer :: TileBuffer -> Int -> IO ()
+drawTileBuffer buff frameNumber = print frameNumber -- mapM_ . concat $ (`drawRow` frameNumber) <$> (assocs buff)
+
+
+
 
 drawGameState :: GameState -> IO ()  -- this is gonna be BIG, need to break it down, find the intermediate representations, ect
 drawGameState state = print state    -- goal of this function is to make a fat list of setSGR and putChar (as seen in the commented out main) then use mapM to make it into one IO action
     
+{-
+main :: IO ()
+main = do
+    setSGR [ SetConsoleIntensity FaintIntensity
+           , SetColor Foreground Vivid Red
+           ]
+    putStr "Hello"
+    setSGR [ SetConsoleIntensity FaintIntensity
+           , SetColor Foreground Vivid White
+           , SetColor Background Dull Blue
+           ]
+    putStrLn "World!"
+-}

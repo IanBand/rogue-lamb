@@ -37,6 +37,12 @@ data MapDimensions = MapDimensions { -- maybe rename to GlobalMapDimensions
 mapDimensions :: MapDimensions
 mapDimensions = MapDimensions { height = 64, width = 64 }
 
+tileCount :: Int
+tileCount = (width mapDimensions) * (height mapDimensions)
+
+arrayBounds :: (Int, Int)
+arrayBounds = (0, tileCount - 1)
+
 type Coordinate = (Int, Int)
 coordinateToIndex :: Coordinate -> Int
 coordinateToIndex (x,y) = (width mapDimensions) * y + x
@@ -58,12 +64,12 @@ data OverworldState = OverworldState {
     -- list of current actors + positions?
 } deriving(Show)
 
-data GameInput = Up | Down | Left | Right | Advance | Back | MenuInput | NoInput deriving(Show)
+data GameInput = Up | Down | Left | Right | Advance | Back | Menu | None deriving(Show)
 
 
 data GameState = GameState {
     frameNumber :: Int,
-    dummyPrevInput :: GameInput
+    prevInput :: GameInput
     -- currentSceneStack :: [SceneType], -- use a real stack template or whatever its called (ADT?) in haskell
     -- overworldState :: OverworldState
     -- team :: (Ally, Ally, Ally, Ally, Ally),
@@ -83,4 +89,7 @@ data GameState = GameState {
 -- buttonMap :: PhysicalInput -> ButtonMapConfig -> GameInput
 
 computeNextState :: GameState -> GameInput -> GameState
-computeNextState prevState input = GameState ((frameNumber prevState) + 1) input
+computeNextState prevState input = GameState {
+    frameNumber = frameNumber prevState + 1,
+    prevInput = input
+}
