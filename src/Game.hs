@@ -10,7 +10,7 @@ import Data.Char
 import Data.List
 import Control.Concurrent
 import System.Console.ANSI
-import System.TimeIt
+-- import System.TimeIt
 
 setupAndRunGame :: IO ()
 setupAndRunGame = do
