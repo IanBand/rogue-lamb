@@ -47,6 +47,10 @@ type Coordinate = (Int, Int)
 coordinateToIndex :: Coordinate -> Int
 coordinateToIndex (x,y) = (width mapDimensions) * y + x
 
+indexToCoordinate :: Int -> Coordinate
+indexToCoordinate i =   (x,y)
+                        where x = i `mod` (width mapDimensions)
+                              y = i `div` (width mapDimensions)
 
 
 

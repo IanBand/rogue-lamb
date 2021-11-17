@@ -83,7 +83,7 @@ renderMenu buff = buff
 -- drawActors/Player
 
 drawTile :: Tile -> Int -> [IO ()]
-drawTile (Tile render colission) frameNumber = [
+drawTile (Tile render colission) keyframe = [
                                 setSGR [
                                       SetColor Background Vivid $ currentValueIn backgroundColorList
                                      ,SetColor Foreground Vivid $ currentValueIn charColorList
@@ -92,7 +92,6 @@ drawTile (Tile render colission) frameNumber = [
                                 ,putChar $ currentValueIn characterList
                                 ]
                                 where currentValueIn = valueOnFrame render keyframe
-                                      keyframe = frameNumber
     
 valueOnFrame :: TileRender -> Int -> (TileRender -> [a]) -> a
 valueOnFrame render keyframe access  = (access render) !! ( keyframe `mod` (length $ access render) )
@@ -101,8 +100,11 @@ valueOnFrame render keyframe access  = (access render) !! ( keyframe `mod` (leng
 -- TODO: fix this logic
 drawRow :: (Int, Tile) -> Int -> [IO ()]
 drawRow (index, tile) frameNumber = if index `mod` (width Game.State.mapDimensions) == 0 
-                                    then [putChar '\n'] ++ (drawTile tile frameNumber) 
-                                    else (drawTile tile $ frameNumber + 1)
+                                    then [putChar '\n'] ++ (drawTile tile $ frameNumber + checker) 
+                                    else (drawTile tile $ frameNumber + checker)
+
+                                    where checker = (if(x `mod` 2 == 0) /= (y `mod` 2 == 0) then 1 else 0)
+                                          (x,y) = indexToCoordinate index 
 
 drawTileBuffer :: TileBuffer -> Int -> IO ()
 drawTileBuffer buff frameNumber = sequence_ $ concat $ map (`drawRow` frameNumber) (assocs buff) 
