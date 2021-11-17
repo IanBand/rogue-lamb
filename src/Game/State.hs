@@ -12,7 +12,7 @@ module Game.State where
 -}
 
 
-data MapId = Home | RivalHome | StartingTown | StartLab deriving(Show, Eq)
+data MapId = Home | RivalHome | StartingTown | StartLab | WaterTest deriving(Show, Eq)
 
 data TextBoxPosition = Top | Middle | Bottom deriving (Show)
 

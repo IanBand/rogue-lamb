@@ -28,6 +28,7 @@ library
           Game
         , Game.State
         , Game.Render
+        , Game.Files
 
 source-repository head
     type:   git

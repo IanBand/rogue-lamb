@@ -24,7 +24,9 @@ data Tile = Tile {
     colission :: ColissionType
 } deriving (Show)
 
-data MapStructure = MapStructure {
+-- TODO: MapStructure should really be defined in state, along with some other things, State and Render should both import from another module... cant really decide on the name/exact functionality
+-- another note is that I am kind of mixing colission data and render data. I think storing the tileset and colission in seperate arrays might solve this
+data MapStructure = MapStructure { 
     id :: MapId,
     tileData :: TileBuffer 
     -- some sort of actor list, an actors existance may depend on game flags
